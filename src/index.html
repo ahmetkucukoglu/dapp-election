@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DAPP - Seçim Sistemi</title>
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <h1 class="text-center">DAPP - Seçim Sistemi</h1>
+        <hr/>
+        <br/>
+        <div id="loader">
+          <p class="text-center">Loading...</p>
+        </div>
+        <div id="content" style="display: none;">
+          <div class="panel panel-default">
+            <div class="panel-heading">Adaylar</div>
+            <div class="panel-body">
+              <p>300wei karşılığında aday olabilirsiniz. Seçimi kazanmanız durumunda ödemeniz size geri iade edilir.</p>
+              <form class="form-inline" onSubmit="App.registerCandidate(); return false;">
+                <div class="form-group">
+                  <label for="candidateName">Adayın Adı</label>
+                  <input type="text" class="form-control" id="candidateName" />
+                </div>
+                <button type="submit" class="btn btn-primary">Aday ol</button>
+
+              </form>
+            </div>
+
+            <table class="table table-condensed">
+              <thead>
+                <tr>
+                  <th>Hesap Adresi</th>
+                  <th>Aday Adı</th>
+                  <th>Oy Sayısı</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="candidates"></tbody>
+            </table>
+          </div>
+          <hr/>
+
+          <hr/>
+          <p id="accountAddress" class="text-center">Hesabınız: </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/handlebars.min.js"></script>
+  <script src="templates/candidates.tpl.js"></script>
+  <script src="js/web3.min.js"></script>
+  <script src="js/truffle-contract.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

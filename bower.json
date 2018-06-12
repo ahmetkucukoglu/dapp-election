@@ -1,0 +1,21 @@
+{
+  "name": "election-dapp",
+  "description": "",
+  "main": "truffle.js",
+  "authors": [
+    "Ahmet KÜÇÜKOĞLU <ahmetkucukoglu@gmail.com>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/ahmetkucukoglu/election",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "handlebars": "^4.0.11"
+  }
+}
