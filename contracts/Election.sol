@@ -63,7 +63,7 @@ contract Election {
 
     function becomeCandidate(string _name) public payable onlyFirstCanditate {
 
-        require(msg.value == 300);
+        require(msg.value == 500000000000000000);
 
         candidateAddress[candidatesCount] = msg.sender;
         candidates[msg.sender] = Candidate(msg.sender, _name, 0);
@@ -95,7 +95,7 @@ contract Election {
             }
         }
 
-        winnerAddress.transfer(300);
+        winnerAddress.transfer(500000000000000000);
 
         emit winnerEvent(winnerName, winnerVoteCount);
     }

@@ -65,12 +65,25 @@ App = {
       if (err === null) {
         App.account = account;
         $("#accountAddress").append(account);
+
+        web3.eth.getBalance(App.account, web3.eth.defaultBlock, (err, val) => {
+          //var wei = web3.fromWei(val).toNumber();
+          var balance = val.toNumber();
+          console.log(balance);
+
+          if (balance < 500000000000000000) {
+            console.log("Bakiye yetersiz");
+          }
+        });
       }
     });
 
     // Load contract data
     App.contracts.Election.deployed().then(function (instance) {
       electionInstance = instance;
+      return electionInstance.voters(App.account);
+    }).then(function (voter) {
+      voted = voter;
       return electionInstance.candidatesCount();
     }).then(function (candidatesCount) {
 
@@ -78,6 +91,7 @@ App = {
 
       for (var i = 0; i < candidatesCount; i++) {
         electionInstance.candidateAddress(i).then(function (adr) {
+
           electionInstance.candidates(adr).then(function (candidate) {
             var data = Handlebars.templates.candidates({
               candidate: {
@@ -88,17 +102,16 @@ App = {
             });
 
             $("#candidates").append(data);
+
+            if (voted) {
+              $('#candidates .btn-vote').attr("disabled", "disabled");
+            }
           });
         });
       }
 
       return electionInstance.voters(App.account);
     }).then(function (hasVoted) {
-      console.log(hasVoted);
-      // Do not allow a user to vote
-      if (hasVoted) {
-        $('#candidates .btn-vote').attr("disabled", "disabled");
-      }
       loader.hide();
       content.show();
     }).catch(function (error) {
@@ -123,7 +136,7 @@ App = {
     console.log(App.account);
     console.log(candidateName);
     App.contracts.Election.deployed().then(function (instance) {
-      return instance.becomeCandidate(candidateName, { from: App.account, value: 300 });
+      return instance.becomeCandidate(candidateName, { from: App.account, value: 500000000000000000 });
     }).then(function (result) {
       console.log(result);
       // Wait for votes to update

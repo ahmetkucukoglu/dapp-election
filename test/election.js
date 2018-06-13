@@ -10,7 +10,7 @@ contract('Election', function (accounts) {
     });
   });
 
-  it('300wei ödemesi yapılmadan aday olunamamalı', function () {
+  it('0.5ETH ödemesi yapılmadan aday olunamamalı', function () {
     return Election.deployed().then(function (instance) {
       return instance.becomeCandidate('RTE', { value: 200 });
     }).then(assert.fail).catch(function (error) {
@@ -18,23 +18,23 @@ contract('Election', function (accounts) {
     });
   });
 
-  it('300wei ödemesi durumunda aday olunabilmeli', function () {
+  it('0.5ETH ödemesi durumunda aday olunabilmeli', function () {
     return Election.deployed().then(function (instance) {
       electionInstance = instance;
-      return instance.becomeCandidate('RTE', { value: 300 });
+      return instance.becomeCandidate('RTE', { value: 500000000000000000 });
     }).then(function (balance) {
       return electionInstance.candidatesCount();
     }).then(function (count) {
       assert.equal(count, 1);
       return web3.eth.getBalance(electionInstance.address)
     }).then(function (balance) {
-      assert.equal(balance, 300);
+      assert.equal(balance, 500000000000000000);
     });
   });
 
   it('Bir aday bir daha aday olamamalı', function () {
     return Election.deployed().then(function (instance) {
-      return instance.becomeCandidate('RTE', { value: 300 });
+      return instance.becomeCandidate('RTE', { value: 500000000000000000 });
     }).then(assert.fail).catch(function (error) {
       assert(error.message.indexOf('revert') >= 0, "Hata mesajının içinde 'revert' olmalı");
     });
