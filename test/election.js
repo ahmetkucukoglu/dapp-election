@@ -21,20 +21,20 @@ contract('Election', function (accounts) {
   it('0.5ETH ödemesi durumunda aday olunabilmeli', function () {
     return Election.deployed().then(function (instance) {
       electionInstance = instance;
-      return instance.becomeCandidate('RTE', { value: 500000000000000000 });
+      return instance.becomeCandidate('RTE', { value: 1000000000000000000 });
     }).then(function (balance) {
       return electionInstance.candidatesCount();
     }).then(function (count) {
       assert.equal(count, 1);
       return web3.eth.getBalance(electionInstance.address)
     }).then(function (balance) {
-      assert.equal(balance, 500000000000000000);
+      assert.equal(balance, 1000000000000000000);
     });
   });
 
   it('Bir aday bir daha aday olamamalı', function () {
     return Election.deployed().then(function (instance) {
-      return instance.becomeCandidate('RTE', { value: 500000000000000000 });
+      return instance.becomeCandidate('RTE', { value: 1000000000000000000 });
     }).then(assert.fail).catch(function (error) {
       assert(error.message.indexOf('revert') >= 0, "Hata mesajının içinde 'revert' olmalı");
     });
@@ -43,15 +43,15 @@ contract('Election', function (accounts) {
   it('Seçmen oy verebilmeli', function () {
     return Election.deployed().then(function (instance) {
       electionInstance = instance;
-      return electionInstance.vote(accounts[0]);
+      return electionInstance.vote(accounts[1]);
     }).then(function (receipt) {
       assert.equal(receipt.logs.length, 1, '1 olay tetiklendi');
       assert.equal(receipt.logs[0].event, 'votedEvent', 'Tetiklenen olayın ismi doğrulandı');
-      assert.equal(receipt.logs[0].args._candidateAddress, accounts[0], 'Adayın adresi doğrulandı');
-      return electionInstance.voters(accounts[0]);
+      assert.equal(receipt.logs[0].args._candidateId, accounts[1], 'Adayın adresi doğrulandı');
+      return electionInstance.voters(accounts[1]);
     }).then(function (voted) {
       assert(voted, 'Seçmen oy verdi olarak işaretlendi');
-      return electionInstance.candidates(accounts[0]);
+      return electionInstance.candidates(accounts[1]);
     }).then(function (candidate) {
       assert.equal(candidate[2], 1, 'Adayın oyu 1 oldu');
     });
@@ -73,12 +73,25 @@ contract('Election', function (accounts) {
     }).then(function (receipt) {
       assert.equal(receipt.logs.length, 1, "1 olay tetiklendi");
       assert.equal(receipt.logs[0].event, "winnerEvent", "Tetiklenen olayın ismi doğrulandı");
-      assert.equal(receipt.logs[0].args._name, "RTE", "Kazanan adayın ismi doğrulandı");
-      assert.equal(receipt.logs[0].args._voteCount, 1, "Kazanan adayın topladığı oy sayısı doğrulandı");
+      assert.equal(receipt.logs[0].args._candidateName, "RTE", "Kazanan adayın ismi doğrulandı");
+      assert.equal(receipt.logs[0].args._candidateVoteCount, 1, "Kazanan adayın topladığı oy sayısı doğrulandı");
 
-      return web3.eth.getBalance(electionInstance.address)
+      return web3.eth.getBalance(electionInstance.address);
     }).then(function (balance) {
       assert.equal(balance, 0);
+    });
+  });
+
+  it('Seçim bittiğinde oy kullanılamamalı', function () {
+    return Election.deployed().then(function (instance) {
+      electionInstance = instance;
+      return electionInstance.vote(accounts[5]);
+    }).then(assert.fail).catch(function (error) {
+      assert(error.message.indexOf('revert') >= 0, "Hata mesajının içinde 'revert' olmalı");
+
+      return electionInstance.isFinished();
+    }).then(function (isFinished) {
+      assert(isFinished, "Seçim sonlanmış olmalı");
     });
   });
 });

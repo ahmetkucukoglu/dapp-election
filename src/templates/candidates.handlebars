@@ -1,6 +1,12 @@
-<tr>
+<tr data-candidate-id="{{candidate.id}}" {{#if candidate.isWinner}} class="success" {{/if}}>
   <td>{{candidate.id}}</td>
-  <td>{{candidate.name}}</td>
-  <td>{{candidate.voteCount}}</td>
-  <td><button type="button" class="btn btn-primary btn-vote" onclick="App.castVote('{{candidate.id}}');">Oy ver</button></td>
+  <td class="candidate-name">{{candidate.name}} 
+    {{#if candidate.isWinner}}
+    <span class="label label-success">Kazandı!</span>
+    {{/if}}
+  </td>
+  <td class="vote-count">{{candidate.voteCount}}</td>
+  <td>
+    <button type="button" class="btn btn-primary btn-vote" onclick="App.castVote('{{candidate.id}}');">Oy ver</button>
+  </td>
 </tr>

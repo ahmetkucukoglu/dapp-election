@@ -8,6 +8,11 @@
   <title>DAPP - Seçim Sistemi</title>
 
   <link href="css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .table>tbody>tr>td {
+      vertical-align: middle !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -15,23 +20,26 @@
     <div class="row">
       <div class="col-lg-12">
         <h1 class="text-center">DAPP - Seçim Sistemi</h1>
+        <p id="contractAddress" class="text-center"></p>
+        <button type="button" class="btn btn-danger center-block hidden" id="btnFinish" onclick="App.finish();">Seçimi Bitir</button>
         <hr/>
         <br/>
         <div id="loader">
           <p class="text-center">Loading...</p>
         </div>
         <div id="content" style="display: none;">
-          <div class="panel panel-default">
+          <div class="panel panel-primary">
             <div class="panel-heading">Adaylar</div>
             <div class="panel-body">
-              <p>0.5ETH karşılığında aday olabilirsiniz. Seçimi kazanmanız durumunda ödemeniz size geri iade edilir.</p>
-              <form class="form-inline" onSubmit="App.registerCandidate(); return false;">
+              <p>1ETH karşılığında aday olabilirsiniz. Seçimi kazanmanız durumunda ödemeniz size geri iade edilir.</p>
+              <div class="alert alert-warning" id="insufficientBalance">
+                <strong>Uyarı!</strong> Bakiyeniz yetersiz olduğu için aday olamazsınız. </div>
+              <form class="form-inline" id="registerCandidateForm" onSubmit="App.registerCandidate(); return false;">
                 <div class="form-group">
                   <label for="candidateName">Adayın Adı</label>
                   <input type="text" class="form-control" id="candidateName" />
                 </div>
                 <button type="submit" class="btn btn-primary">Aday ol</button>
-
               </form>
             </div>
 
@@ -47,10 +55,8 @@
               <tbody id="candidates"></tbody>
             </table>
           </div>
-          <hr/>
 
-          <hr/>
-          <p id="accountAddress" class="text-center">Hesabınız: </p>
+          <p id="accountAddress" class="text-center">Hesap Adresiniz: </p>
         </div>
       </div>
     </div>

@@ -2,14 +2,12 @@ App = {
   web3Provider: null,
   contracts: {},
   account: '0x0',
-  hasVoted: false,
 
   init: function () {
     return App.initWeb3();
   },
 
   initWeb3: function () {
-    // TODO: refactor conditional
     if (typeof web3 !== 'undefined') {
       // If a web3 instance is already provided by Meta Mask.
       App.web3Provider = web3.currentProvider;
@@ -19,137 +17,278 @@ App = {
       App.web3Provider = new Web3.providers.HttpProvider('http://localhost:8545');
       web3 = new Web3(App.web3Provider);
     }
+
     return App.initContract();
   },
 
   initContract: function () {
-    $.getJSON("Election.json", function (election) {
+    $.getJSON('Election.json', (election) => {
       // Instantiate a new truffle contract from the artifact
       App.contracts.Election = TruffleContract(election);
       // Connect provider to interact with contract
       App.contracts.Election.setProvider(App.web3Provider);
 
-      App.listenForEvents();
+      App.listenEvents();
 
       return App.render();
     });
   },
 
-  // Listen for events emitted from the contract
-  listenForEvents: function () {
-    App.contracts.Election.deployed().then(function (instance) {
-      // Restart Chrome if you are unable to receive this event
-      // This is a known issue with Metamask
-      // https://github.com/MetaMask/metamask-extension/issues/2393
+  listenEvents: function () {
+    App.contracts.Election.deployed().then((instance) => {
+
       instance.votedEvent({}, {
         fromBlock: 0,
         toBlock: 'latest'
-      }).watch(function (error, event) {
-        console.log("event triggered", event)
-        // Reload when a new vote is recorded
-        //App.render();
+      }).watch((error, event) => {
+
+        console.log('event triggered', event);
+
+        $("[data-candidate-id='" + event.args._candidateId + "'] .vote-count").html(event.args._candidateVoteCount.toString());
+
+        if (event.args._woterId == App.account) {
+          App.disableVoteButton();
+        }
+
+        App.hidePreloader();
+
+      });
+
+      instance.registeredCandidateEvent({}, {
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch((error, event) => {
+
+        console.log('event triggered', event);
+
+        App.addCandidateItem({
+          id: event.args._candidateId.toString(),
+          name: event.args._candidateName,
+          voteCount: event.args._candidateVoteCount.toString()
+        });
+
+        if (event.args._candidateId == App.account) {
+          App.hideRegisterCandidateForm();
+        }
+
+        App.hidePreloader();
+
+      });
+
+      instance.winnerEvent({}, {
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch((error, event) => {
+
+        console.log('event triggered', event);
+
+        var candidateRow = $("[data-candidate-id='" + event.args._candidateId + "']");
+        candidateRow.addClass('success');
+        candidateRow.find('.candidate-name').append(' <span class="label label-success">Kazandı!</span>');
+
+        App.disableFinishButton();
+        App.hidePreloader();
+
       });
     });
   },
 
   render: function () {
-    var electionInstance;
-    var loader = $("#loader");
-    var content = $("#content");
+    App.showPreloader();
 
-    loader.show();
-    content.hide();
+    web3.eth.getCoinbase((err, account) => {
 
-    // Load account data
-    web3.eth.getCoinbase(function (err, account) {
       if (err === null) {
         App.account = account;
-        $("#accountAddress").append(account);
+        $('#accountAddress').append(account);
 
         web3.eth.getBalance(App.account, web3.eth.defaultBlock, (err, val) => {
-          //var wei = web3.fromWei(val).toNumber();
           var balance = val.toNumber();
-          console.log(balance);
 
-          if (balance < 500000000000000000) {
-            console.log("Bakiye yetersiz");
+          if (balance < 1000000000000000000) {
+            $('#insufficientBalance').show();
+            $('#registerCandidateForm').hide();
+          }
+          else {
+            $('#insufficientBalance').hide();
+            $('#registerCandidateForm').show();
           }
         });
       }
+
     });
 
-    // Load contract data
-    App.contracts.Election.deployed().then(function (instance) {
+    App.contracts.Election.deployed().then((instance) => {
+
+      console.log('instance', instance);
+      $('#contractAddress').append(instance.address);
+
       electionInstance = instance;
-      return electionInstance.voters(App.account);
-    }).then(function (voter) {
-      voted = voter;
-      return electionInstance.candidatesCount();
-    }).then(function (candidatesCount) {
 
-      $("#candidates").empty();
+      return electionInstance.owner();
 
-      for (var i = 0; i < candidatesCount; i++) {
-        electionInstance.candidateAddress(i).then(function (adr) {
+    }).then((owner) => {
 
-          electionInstance.candidates(adr).then(function (candidate) {
-            var data = Handlebars.templates.candidates({
-              candidate: {
-                id: candidate[0].toString(),
-                name: candidate[1],
-                voteCount: candidate[2].toString()
-              }
-            });
+      console.log('owner', owner);
 
-            $("#candidates").append(data);
-
-            if (voted) {
-              $('#candidates .btn-vote').attr("disabled", "disabled");
-            }
-          });
-        });
+      if (owner == App.account) {
+        $('#btnFinish').removeClass('hidden');
       }
 
       return electionInstance.voters(App.account);
-    }).then(function (hasVoted) {
-      loader.hide();
-      content.show();
-    }).catch(function (error) {
-      console.warn(error);
-    });
-  },
 
-  castVote: function (candidateId) {
-    App.contracts.Election.deployed().then(function (instance) {
-      return instance.vote(candidateId, { from: App.account });
-    }).then(function (result) {
-      // Wait for votes to update
-      $("#content").hide();
-      $("#loader").show();
-    }).catch(function (err) {
-      console.error(err);
+    }).then((voter) => {
+
+      console.log('voter', voter);
+
+      voted = voter;
+      return electionInstance.isFinished()
+
+    }).then((isFinished) => {
+
+      console.log('isFinished', isFinished);
+
+      if (isFinished) {
+        App.disableFinishButton();
+      }
+
+      finished = isFinished;
+
+      return electionInstance.winnerCandidate();
+
+    }).then((winnerCandidate) => {
+
+      console.log('winnerCandidate', winnerCandidate);
+
+      winner = winnerCandidate.toString();
+
+      return electionInstance.candidatesCount();
+
+    }).then((candidatesCount) => {
+
+      console.log('candidatesCount', candidatesCount.toNumber());
+
+      $('#candidates').empty();
+
+      for (var i = 0; i < candidatesCount; i++) {
+        electionInstance.candidateAddress(i).then((address) => {
+
+          electionInstance.candidates(address).then((candidate) => {
+
+            App.addCandidateItem({
+              id: candidate[0].toString(),
+              name: candidate[1],
+              voteCount: candidate[2].toString(),
+              isWinner: candidate[0].toString() == winner
+            });
+
+            if (voted || finished) {
+              App.disableVoteButton();
+            }
+
+            if (App.account == candidate[0] || finished) {
+              App.hideRegisterCandidateForm();
+            }
+
+          });
+
+        });
+      }
+    }).then(() => {
+
+      App.hidePreloader();
+
+    }).catch((error) => {
+      console.error(error);
     });
   },
 
   registerCandidate: function () {
-    var candidateName = $('#candidateName').val();
-    console.log(App.account);
-    console.log(candidateName);
-    App.contracts.Election.deployed().then(function (instance) {
-      return instance.becomeCandidate(candidateName, { from: App.account, value: 500000000000000000 });
-    }).then(function (result) {
-      console.log(result);
-      // Wait for votes to update
-      $("#content").hide();
-      $("#loader").show();
-    }).catch(function (err) {
+    var candidateItem = App.getCandidateItem();
+
+    App.contracts.Election.deployed().then((instance) => {
+
+      return instance.becomeCandidate(candidateItem.candidateName, { from: App.account, value: 1000000000000000000 });
+
+    }).then(() => {
+
+      App.showPreloader();
+
+    }).catch((err) => {
       console.error(err);
     });
+  },
+
+  castVote: function (candidateId) {
+    App.contracts.Election.deployed().then((instance) => {
+
+      return instance.vote(candidateId, { from: App.account });
+
+    }).then(() => {
+
+      App.showPreloader();
+
+    }).catch((error) => {
+      console.error(error);
+    });
+  },
+
+  finish: function () {
+    App.contracts.Election.deployed().then((instance) => {
+
+      return instance.finish();
+
+    }).then(() => {
+
+      App.showPreloader();
+
+    }).catch((error) => {
+      console.error(error);
+    });
+  },
+
+  getCandidateItem: function () {
+    return {
+      candidateName: $('#candidateName').val()
+    };
+  },
+
+  addCandidateItem: function (candidate) {
+    var candidateItemHtml = Handlebars.templates.candidates({
+      candidate: {
+        id: candidate.id,
+        name: candidate.name,
+        voteCount: candidate.voteCount,
+        isWinner: candidate.isWinner
+      }
+    });
+
+    $('#candidates').append(candidateItemHtml);
+  },
+
+  hidePreloader: function () {
+    $('#content').show();
+    $('#loader').hide();
+  },
+
+  showPreloader: function () {
+    $('#content').hide();
+    $('#loader').show();
+  },
+
+  hideRegisterCandidateForm: function () {
+    $('#registerCandidateForm input, #registerCandidateForm button').attr('disabled', 'disabled');
+  },
+
+  disableVoteButton: function () {
+    $('#candidates .btn-vote').attr('disabled', 'disabled');
+  },
+
+  disableFinishButton: function () {
+    $('#btnFinish').attr('disabled', 'disabled');
   }
 };
 
 $(function () {
-  $(window).load(function () {
-    App.init();
-  });
+  App.init();
 });

@@ -9,7 +9,7 @@ contract Election {
     }
 
     //Kontrat sahibinin adresi
-    address owner;
+    address public owner;
 
     //Seçmenler
     mapping(address => bool) public voters;
@@ -21,16 +21,32 @@ contract Election {
     //Aday sayısı
     uint public candidatesCount;
 
+    //Seçim bitti
+    bool public isFinished;
+
+    //Seçimi kazanan adayın adresi
+    address public winnerCandidate;
+
     //Oy kullanıldığında tetiklenir
     event votedEvent(
-        address indexed _candidateAddress,
-        string _name
+        address indexed _candidateId,
+        string _candidateName,
+        uint _candidateVoteCount,
+        address _woterId
+    );
+
+    //Aday olunduğunda tetiklenir
+    event registeredCandidateEvent(
+        address indexed _candidateId,
+        string _candidateName,
+        uint _candidateVoteCount
     );
 
     //Kazanan belli olduğunda tetiklenir
     event winnerEvent(
-        string _name,
-        uint _voteCount
+        address indexed _candidateId,
+         string _candidateName,
+         uint _candidateVoteCount
     );
 
     //Kontrat sahibinin olması zorunlu
@@ -57,33 +73,40 @@ contract Election {
         _;
     }
 
+    //Seçimin sona erip ermediği kontrolü
+    modifier validFinishElection(){
+        require(!isFinished);
+        _;
+    }
+
     constructor() public { 
         owner = msg.sender;
     }
 
-    function becomeCandidate(string _name) public payable onlyFirstCanditate {
+    function becomeCandidate(string _name) public payable validFinishElection onlyFirstCanditate {
 
-        require(msg.value == 500000000000000000);
+        require(msg.value == 1000000000000000000);
 
         candidateAddress[candidatesCount] = msg.sender;
         candidates[msg.sender] = Candidate(msg.sender, _name, 0);
 
         candidatesCount++;
+
+        emit registeredCandidateEvent(msg.sender, _name, 0);
     }
 
-    function vote(address _candidateAddress) public onlyFirstVote validCanditate(_candidateAddress) {
+    function vote(address _candidateAddress) public validFinishElection onlyFirstVote validCanditate(_candidateAddress) {
         voters[msg.sender] = true;
 
         candidates[_candidateAddress].voteCount ++;
 
-        emit votedEvent(_candidateAddress, candidates[_candidateAddress].name);
+        emit votedEvent(_candidateAddress, candidates[_candidateAddress].name, candidates[_candidateAddress].voteCount, msg.sender);
     }
 
     function finish() public onlyOwner {
         
         string memory winnerName = "";
         uint winnerVoteCount = 0;
-        address winnerAddress = address(0);
 
         for (uint i = 0; i < candidatesCount; i++) {
             address addr = candidateAddress[i];
@@ -92,11 +115,14 @@ contract Election {
             if(candidate.voteCount > winnerVoteCount) {
                 winnerVoteCount = candidate.voteCount;
                 winnerName = candidate.name;
+                winnerCandidate = candidate.id;
             }
         }
 
-        winnerAddress.transfer(500000000000000000);
+        winnerCandidate.transfer(1000000000000000000);
 
-        emit winnerEvent(winnerName, winnerVoteCount);
+        isFinished = true;
+
+        emit winnerEvent(winnerCandidate, winnerName, winnerVoteCount);
     }
 }
