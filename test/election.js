@@ -12,7 +12,7 @@ contract('Election', function (accounts) {
 
   it('0.5ETH ödemesi yapılmadan aday olunamamalı', function () {
     return Election.deployed().then(function (instance) {
-      return instance.becomeCandidate('RTE', { value: 200 });
+      return instance.becomeCandidate('RTE', 'QmaBbeYSQ92HWERuKcmRp9wWzr2C8LjJQwnvmf8LuviJAY', { value: 200 });
     }).then(assert.fail).catch(function (error) {
       assert(error.message.indexOf('revert') >= 0, "Hata mesajının içinde 'revert' olmalı");
     });
@@ -21,7 +21,7 @@ contract('Election', function (accounts) {
   it('0.5ETH ödemesi durumunda aday olunabilmeli', function () {
     return Election.deployed().then(function (instance) {
       electionInstance = instance;
-      return instance.becomeCandidate('RTE', { value: 1000000000000000000 });
+      return instance.becomeCandidate('RTE', 'QmaBbeYSQ92HWERuKcmRp9wWzr2C8LjJQwnvmf8LuviJAY', { value: 1000000000000000000 });
     }).then(function (balance) {
       return electionInstance.candidatesCount();
     }).then(function (count) {
@@ -34,7 +34,7 @@ contract('Election', function (accounts) {
 
   it('Bir aday bir daha aday olamamalı', function () {
     return Election.deployed().then(function (instance) {
-      return instance.becomeCandidate('RTE', { value: 1000000000000000000 });
+      return instance.becomeCandidate('RTE', 'QmaBbeYSQ92HWERuKcmRp9wWzr2C8LjJQwnvmf8LuviJAY', { value: 1000000000000000000 });
     }).then(assert.fail).catch(function (error) {
       assert(error.message.indexOf('revert') >= 0, "Hata mesajının içinde 'revert' olmalı");
     });
@@ -53,7 +53,7 @@ contract('Election', function (accounts) {
       assert(voted, 'Seçmen oy verdi olarak işaretlendi');
       return electionInstance.candidates(accounts[1]);
     }).then(function (candidate) {
-      assert.equal(candidate[2], 1, 'Adayın oyu 1 oldu');
+      assert.equal(candidate[3], 1, 'Adayın oyu 1 oldu');
     });
   });
 

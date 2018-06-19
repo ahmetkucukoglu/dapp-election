@@ -22,6 +22,7 @@ App = {
   },
 
   initContract: function () {
+
     $.getJSON('Election.json', (election) => {
       // Instantiate a new truffle contract from the artifact
       App.contracts.Election = TruffleContract(election);
@@ -64,6 +65,7 @@ App = {
         App.addCandidateItem({
           id: event.args._candidateId.toString(),
           name: event.args._candidateName,
+          photoHash : event.args._candidatePhotoHash,
           voteCount: event.args._candidateVoteCount.toString()
         });
 
@@ -178,7 +180,8 @@ App = {
             App.addCandidateItem({
               id: candidate[0].toString(),
               name: candidate[1],
-              voteCount: candidate[2].toString(),
+              photoHash: candidate[2],
+              voteCount: candidate[3].toString(),
               isWinner: candidate[0].toString() == winner
             });
 
@@ -204,19 +207,37 @@ App = {
   },
 
   registerCandidate: function () {
-    var candidateItem = App.getCandidateItem();
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      console.log('buffer', reader.result);
 
-    App.contracts.Election.deployed().then((instance) => {
+      const ipfs = window.IpfsApi('localhost', '5001');
+      //const ipfs = window.IpfsApi({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+      
+      ipfs.files.add(buffer.Buffer(reader.result), (error, result) => {
 
-      return instance.becomeCandidate(candidateItem.candidateName, { from: App.account, value: 1000000000000000000 });
+        console.log('ipfs error', error);
+        console.log('ipfs hash', result[0]);
+        console.log('ipfs url', 'https://ipfs.io/ipfs/' + result[0].hash);
+        
+        var candidateItem = App.getCandidateItem();
 
-    }).then(() => {
+        App.contracts.Election.deployed().then((instance) => {
 
-      App.showPreloader();
+          return instance.becomeCandidate(candidateItem.candidateName, result[0].hash, { from: App.account, value: 1000000000000000000 });
 
-    }).catch((err) => {
-      console.error(err);
-    });
+        }).then(() => {
+
+          App.showPreloader();
+
+        }).catch((err) => {
+          console.error(err);
+        });
+      });
+    };
+
+    const photo = document.getElementById("photo");
+    reader.readAsArrayBuffer(photo.files[0]);
   },
 
   castVote: function (candidateId) {
@@ -258,6 +279,7 @@ App = {
       candidate: {
         id: candidate.id,
         name: candidate.name,
+        photoHash : candidate.photoHash,
         voteCount: candidate.voteCount,
         isWinner: candidate.isWinner
       }

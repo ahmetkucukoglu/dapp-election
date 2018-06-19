@@ -5,6 +5,7 @@ contract Election {
     struct Candidate {
         address id;
         string name;
+        string photoHash;
         uint voteCount;
     }
 
@@ -39,14 +40,15 @@ contract Election {
     event registeredCandidateEvent(
         address indexed _candidateId,
         string _candidateName,
+        string _candidatePhotoHash,
         uint _candidateVoteCount
     );
 
     //Kazanan belli olduğunda tetiklenir
     event winnerEvent(
         address indexed _candidateId,
-         string _candidateName,
-         uint _candidateVoteCount
+        string _candidateName,
+        uint _candidateVoteCount
     );
 
     //Kontrat sahibinin olması zorunlu
@@ -83,16 +85,15 @@ contract Election {
         owner = msg.sender;
     }
 
-    function becomeCandidate(string _name) public payable validFinishElection onlyFirstCanditate {
-
+    function becomeCandidate(string _name, string _photoHash) public payable validFinishElection onlyFirstCanditate {
         require(msg.value == 1000000000000000000);
 
         candidateAddress[candidatesCount] = msg.sender;
-        candidates[msg.sender] = Candidate(msg.sender, _name, 0);
+        candidates[msg.sender] = Candidate(msg.sender, _name, _photoHash, 0);
 
         candidatesCount++;
 
-        emit registeredCandidateEvent(msg.sender, _name, 0);
+        emit registeredCandidateEvent(msg.sender, _name, _photoHash, 0);
     }
 
     function vote(address _candidateAddress) public validFinishElection onlyFirstVote validCanditate(_candidateAddress) {
@@ -104,7 +105,6 @@ contract Election {
     }
 
     function finish() public onlyOwner {
-        
         string memory winnerName = "";
         uint winnerVoteCount = 0;
 

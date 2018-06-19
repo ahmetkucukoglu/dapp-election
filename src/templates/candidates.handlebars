@@ -1,6 +1,7 @@
 <tr data-candidate-id="{{candidate.id}}" {{#if candidate.isWinner}} class="success" {{/if}}>
+  <td><img width="45" src="https://ipfs.io/ipfs/{{candidate.photoHash}}" /></td>
   <td>{{candidate.id}}</td>
-  <td class="candidate-name">{{candidate.name}} 
+  <td class="candidate-name"> {{candidate.name}} 
     {{#if candidate.isWinner}}
     <span class="label label-success">Kazandı!</span>
     {{/if}}

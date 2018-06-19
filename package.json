@@ -16,6 +16,7 @@
     "lite-server": "^2.3.0"
   },
   "dependencies": {
-    "handlebars": "^4.0.11"
+    "handlebars": "^4.0.11",
+    "ipfs-api": "^22.1.0"
   }
 }
