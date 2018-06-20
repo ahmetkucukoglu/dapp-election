@@ -211,8 +211,8 @@ App = {
     reader.onloadend = () => {
       console.log('buffer', reader.result);
 
-      const ipfs = window.IpfsApi('localhost', '5001');
-      //const ipfs = window.IpfsApi({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+      const ipfs = window.IpfsApi({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+      //const ipfs = window.IpfsApi('localhost', '5001');
       
       ipfs.files.add(buffer.Buffer(reader.result), (error, result) => {
 

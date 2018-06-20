@@ -110,7 +110,7 @@ contract Election {
 
         for (uint i = 0; i < candidatesCount; i++) {
             address addr = candidateAddress[i];
-            Candidate storage candidate = candidates[addr];
+            Candidate memory candidate = candidates[addr];
 
             if(candidate.voteCount > winnerVoteCount) {
                 winnerVoteCount = candidate.voteCount;
